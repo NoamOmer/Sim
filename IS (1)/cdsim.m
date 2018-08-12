@@ -1,0 +1,2 @@
+global SimRoot;
+cd(SimRoot);

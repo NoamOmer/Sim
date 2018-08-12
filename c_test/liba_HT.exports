@@ -1,0 +1,7 @@
+liba_HTInitialize
+liba_HTInitializeWithHandlers
+liba_HTTerminate
+liba_HTPrintStackTrace
+liba_HTGetMcrID
+mlxHT
+mlfHT

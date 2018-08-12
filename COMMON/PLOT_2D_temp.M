@@ -1,0 +1,186 @@
+function plot_2d(fig2,pos,data,SF)
+
+col=[1 1 1];
+colo='bgrykmc';
+[m,n]=size(pos,1);
+
+for k=1:K
+    a=axes('units','normalized','position',pos(k,:),'color',col,'userdata',k);
+    if iscell(data)
+    end
+    
+    line(F,P(:,k),'color',colo(k),'tag','psd_data','buttondownfcn',[S,'6);'],'parent',a);
+    [m,n]=min_max(F);
+    l=find(F<=m+(n-m)/5);
+    yy=min_max(P(l,k));
+    if range(yy)==0,yy=min(yy)+[-0.5,0.5];end
+    set(a,'xlim',[F(l(1)),F(l(end))],'ylim',yy)
+    if k<K;
+        set(a,'xtick',[])
+    end
+end
+pos=get(a,'position');
+pos=[pos(1),.14,pos(3),.04];
+an=uicontrol('Style','slider','units','normalized','min',m,'max',m+(n-m)*.95,'position',...
+    pos,'sliderstep',[.1 .9]/5,'tag','lim','callback',[S,'1)'],'value',m);
+add_button('frame',[.44,.07,.22,.06],'',[.251,.502,.502]);
+
+h(1)=add_button('text',[.45 .08 .05 .04],'<---');
+add_button('edit',[.5 .08 .1 .04],num2str(range(F(l))),[1 1 1],'band',[S,'1)']);
+h(2)=add_button('text',[.6 .08 .05 .04],'--->');
+set(h,'fontsize',10);
+
+add_button('frame',[.01,.07,.12,.29],'',[.251,.502,.502]);
+h(3)=add_button('pushbutton',[.02,.29,.1,.06],'Select region',[],'',[S,'2);']);
+h(4)=add_button('pushbutton',[.02,.22,.1,.06],'Enter regions',[],'',[S,'8);']);
+h(5)=add_button('pushbutton',[.02,.15,.1,.06],'Clear markers',[],'',[S,'3);']);   
+h(6)=add_button('pushbutton',[.02,.08,.1,.06],'Export',[],'Export',[S,'9);']);
+h(7)=add_button('push',[.01,.85,.12,.06],'Export figure',[],'','export_fig(gcf);');
+
+set(h,'backgroundcolor',[.1529,.0824,.5412],'foregroundcolor',[1 1 1]);
+
+a=add_button('edit',[.25,.01,.6,.04],'',[1 1 1],'info');
+set(a,'horizontalalignment','left','fontsize',10,'foregroundcolor',[1 0 0]);
+
+add_icon([.01,.94,.04,.05],'print','printdlg(gcbf);');
+add_icon([.055,.94,.04,.05],'help','helpdlg(help(''plot_2d''));');
+a=add_icon([.1,.94,.04,.05],'exit',[S,'5);']);
+set(a,'tag','close','userdata',[{P},{F}]);
+a=add_icon([.145,.94,.04,.05],'info',[S,'7);']);
+set(a,'userdata',INFOTXT,'tag','INF');
+
+
+
+
+
+col=[0 0 1;1 0 0;0 1 0];
+info=findobj(fig2,'tag','info');
+cl=findobj(fig2,'tag','close');
+X=get(cl,'userdata');
+P=X{1};F=X{2};
+rangeF=range(F);
+maxf=max(F);
+BAND=findobj(fig2,'tag','band');
+band=str2num(get(BAND,'string'));
+Sli=findobj(fig2,'tag','lim');
+set(Sli,'enable','on');
+axe=findobj(fig2,'type','axes');
+if ~band>0
+    band=rangeF/5;
+    set(BAND,'string',num2str(band))   
+elseif band>=rangeF
+    band=rangeF;
+    set(BAND,'string',num2str(band))   
+    set(Sli,'value',F(1),'enable','off');
+    for k=1:length(axe)
+        YY=min_max(P(:,k));
+        if range(YY)==0
+            YY=YY(1)+[-0.05,0.05];
+        end
+        a=findobj(axe,'userdata',k);
+        set(a,'xlim',[F(1),F(end)],'ylim',YY),
+    end
+end
+
+switch choice
+case 1
+    B=get(Sli,'value');
+    if B>maxf-band,
+        B=maxf-band;
+    end,
+    if strcmp(lower(get(Sli,'enable')),'on')
+        set(Sli,'value',B,'max',maxf-band,'sliderstep',[.1,.9]*band/rangeF),
+    end
+    l=find(F>B & F<B+band);
+    yy=min_max(P(l,:));        
+    for k=1:length(axe)
+        YY=yy(:,k);
+        if range(YY)==0
+            YY=YY(1)+[-0.05,0.05];
+        end
+        a=findobj(axe,'userdata',k);       
+        set(a,'xlim',B+[0,band],'ylim',YY),
+    end
+case 2 %add line
+    [x,y]=get_points(gca,2);
+    px=find(F>x(1) & F<x(2));
+    pos.x=[F(px(1));F(px);F(px(end))];
+    for k=1:length(axe)
+        pos.y=[min(P(:,k));P(px,k);min(P(:,k))];
+        [m,n]=max(pos.y);
+        a=findobj(axe,'userdata',k);       
+        u=uicontextmenu;
+        patch(pos.x,pos.y,col(1,:),'userdata',[m,sum(P(px,k))*(F(2)-F(1)),pos.x(n)],...
+            'buttondownfcn',['plot_2d(',num2str(fig2),',4);'],'tag','peak','parent',a,...
+            'uicontextmenu',u);
+        uimenu(u,'label','Delete','callback','delete(gco)');        
+    end
+case 3 %clear lines
+    delete(findobj(fig2,'tag','peak'));
+    set(info,'string','');
+    return
+case 4 
+    A=get(gco,'userdata');
+    [mi,ma]=min_max(get(gco,'xdata'));
+    stri=['Interval: (',num2str(mi,3),',',num2str(ma,3),'),  Max value (x,y): ',...
+            num2str(A(3),3),',',num2str(A(1),3),...
+            '  Integral: ',num2str(A(2),3)];
+    set(info,'string',stri);
+case 5
+    b=questdlg('Would you like to save the spectrum data?',' ','Save as MAT','Save as TXT','No','Cancel');
+    if strcmp(b,'Save as MAT')
+        [f,p]=uiputfile('*.mat','Select output filename');
+        if p>0
+            save([p,f],'P','F')
+        end      
+        delete(fig2);
+    elseif strcmp(b,'Save as TXT')
+        [f,p]=uiputfile('*.txt','Select output filename');
+        if p>0
+            P=[F(:),P(:)];
+            save([p,f,'.txt'],'P','-ascii','-tabs')
+        end      
+        delete(fig2);
+    elseif strcmp(b,'No')
+        delete(fig2);
+    end
+case 6
+    x=get(gca,'currentpoint');x=x(1);
+    X=get(findobj(gca,'tag','psd_data'),'xdata');
+    Y=get(findobj(gca,'tag','psd_data'),'ydata');
+    [k,I]=min(abs(X-x));
+    stri=['(x,y): ',num2str(X(I),5),',',num2str(Y(I),5)];
+    set(info,'string',stri);   
+case 7
+    h=msgbox(get(gcbo,'userdata'),'createMode','modal'); 
+case 8 %Select line
+    [LF,HF,TP]=addIntFig;
+    X=[{LF},{HF},{TP}];
+    for mm=1:3
+        x=X{4-mm};
+        if ~isempty(x)
+            px=find(F>x(1) & F<x(2));
+            pos.x=[F(px(1));F(px);F(px(end))];
+            for k=1:length(axe)
+                pos.y=[min(P(:,k));P(px,k);min(P(:,k))];
+                [m,n]=max(pos.y);
+                a=findobj(axe,'userdata',k);       
+                patch(pos.x,pos.y,col(mm,:),'userdata',[m,sum(P(px,k))*(F(2)-F(1)),pos.x(n)],...
+                    'buttondownfcn',['plot_2d(',num2str(fig2),',4);'],'tag','peak','parent',a);
+            end
+        end
+    end    
+case 9 %export
+    a=findobj(gca,'type','patch');
+    if isempty(a),return,end
+    for k=1:length(a)
+        A=get(a(k),'userdata');
+        [mi,ma]=min_max(get(a(k),'xdata'));
+        Interval(k,:)=[mi,ma];        
+        Integral(k)=A(2);
+    end    
+    assignin('base','Interval',Interval)
+    assignin('base','Integral',Integral(:))
+end
+
+%*************************************************************************************
